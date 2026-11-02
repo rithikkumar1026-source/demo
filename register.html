@@ -41,7 +41,7 @@
       <div class="message" id="message" role="status"></div>
     </form>
 
-    <p class="footer-text">Already have an account? <a href="index.html">Log in</a></p>
+    <p class="footer-text">Already have an account? <a href="index.html" onclick="login()">Log in</a></p>
   </main>
 
   <script>
@@ -51,6 +51,9 @@
     // The page to open after a successful sign up (your landing page file name).
     const LANDING_PAGE = 'index.html';
     // --------------------------------
+    function login(){
+        window.location.href = LANDING_PAGE;
+    }
 
     const form = document.getElementById('registerForm');
     const emailInput = document.getElementById('email');
