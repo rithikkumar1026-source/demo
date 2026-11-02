@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Create account</title>
+  <link rel="stylesheet" href="register.css">
+</head>
+<body>
+
+  <main class="register-card">
+    <!-- Put your logo at images/logo.png, or delete this line -->
+    <img class="logo" src="images/logo.png" alt="Shop logo" onerror="this.style.display='none'">
+
+    <h1>Create your account</h1>
+    <p class="subtitle">Sign up to get started</p>
+
+    <form id="registerForm" novalidate>
+      <div class="field">
+        <label for="email">Email</label>
+        <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
+        <div class="error-text" id="emailError"></div>
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <div class="password-wrap">
+          <input type="password" id="password" placeholder="At least 6 characters" autocomplete="new-password">
+          <button type="button" class="toggle-btn" id="togglePassword">Show</button>
+        </div>
+        <div class="error-text" id="passwordError"></div>
+      </div>
+
+      <div class="field">
+        <label for="confirmPassword">Confirm password</label>
+        <input type="password" id="confirmPassword" placeholder="Re-enter your password" autocomplete="new-password">
+        <div class="error-text" id="confirmError"></div>
+      </div>
+
+      <button type="submit" class="btn" id="registerBtn">Create account</button>
+      <div class="message" id="message" role="status"></div>
+    </form>
+
+    <p class="footer-text">Already have an account? <a href="index.html">Log in</a></p>
+  </main>
+
+  <script>
+    // ---- CHANGE THESE TWO LINES ----
+    // Your backend address. After you deploy the backend, replace this with its live URL.
+    const API_URL = 'http://localhost:5000';
+    // The page to open after a successful sign up (your landing page file name).
+    const LANDING_PAGE = 'index.html';
+    // --------------------------------
+
+    const form = document.getElementById('registerForm');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const confirmInput = document.getElementById('confirmPassword');
+    const emailError = document.getElementById('emailError');
+    const passwordError = document.getElementById('passwordError');
+    const confirmError = document.getElementById('confirmError');
+    const message = document.getElementById('message');
+    const registerBtn = document.getElementById('registerBtn');
+    const toggleBtn = document.getElementById('togglePassword');
+
+    toggleBtn.addEventListener('click', function () {
+      const isHidden = passwordInput.type === 'password';
+      passwordInput.type = isHidden ? 'text' : 'password';
+      confirmInput.type = isHidden ? 'text' : 'password';
+      toggleBtn.textContent = isHidden ? 'Hide' : 'Show';
+    });
+
+    function showMessage(text, type) {
+      message.textContent = text;
+      message.className = 'message ' + type;
+    }
+
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      emailError.textContent = '';
+      passwordError.textContent = '';
+      confirmError.textContent = '';
+      showMessage('', '');
+
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+      const confirm = confirmInput.value;
+      let valid = true;
+
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        emailError.textContent = 'Enter a valid email address.';
+        valid = false;
+      }
+      if (password.length < 6) {
+        passwordError.textContent = 'Password must be at least 6 characters.';
+        valid = false;
+      }
+      if (confirm !== password) {
+        confirmError.textContent = 'Passwords do not match.';
+        valid = false;
+      }
+      if (!valid) return;
+
+      registerBtn.disabled = true;
+      registerBtn.textContent = 'Creating account...';
+
+      try {
+        const res = await fetch(API_URL + '/api/auth/register', {
+          method: 'POST',
+          credentials: 'include', // lets the browser save the httpOnly cookie
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email, password: password })
+        });
+
+        const data = await res.json().catch(function () { return {}; });
+
+        if (!res.ok) {
+          throw new Error(data.message || 'Could not create the account.');
+        }
+
+        showMessage('Account created. Redirecting...', 'success');
+        window.location.href = LANDING_PAGE;
+      } catch (err) {
+        if (err instanceof TypeError) {
+          showMessage('Cannot reach the server. Make sure the backend is running.', 'error');
+        } else {
+          showMessage(err.message || 'Could not create the account.', 'error');
+        }
+      } finally {
+        registerBtn.disabled = false;
+        registerBtn.textContent = 'Create account';
+      }
+    });
+  </script>
+
+</body>
+</html>
