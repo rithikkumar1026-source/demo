@@ -1,283 +1,536 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Login</title>
-  <style>
-    :root {
-      --bg: #fff7ec;
-      --card: #ffffff;
-      --text: #2b2118;
-      --muted: #7a6a5a;
-      --accent: #e8590c;
-      --accent-dark: #c44a08;
-      --border: #e6d8c6;
-      --error: #c92a2a;
-      --success: #2b8a3e;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Create account</title>
+<style>
+  :root {
+    --bg: #fff7ed;
+    --card: #ffffff;
+    --ink: #2a1a10;
+    --muted: #8a6a55;
+    --line: #e7d9cc;
+    --accent: #ea580c;
+    --accent-dark: #c2410c;
+    --ok: #16a34a;
+    --bad: #dc2626;
+    --gold: #fde047;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    transition: background .6s;
+    overflow-x: hidden;
+  }
+  body.ssj { background: #fff4c2; }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+  /* screen flash when transforming */
+  .flash {
+    position: fixed; inset: 0; background: #fde047; opacity: 0;
+    pointer-events: none; z-index: 50;
+  }
+  .flash.go { animation: flash .9s ease-out; }
+  @keyframes flash { 0% { opacity: 0; } 15% { opacity: .85; } 100% { opacity: 0; } }
 
-    body {
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
+  .card {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 44px 36px 36px;
+    box-shadow: 0 10px 30px rgba(120, 60, 20, .08);
+    transition: box-shadow .5s, border-color .5s;
+  }
+  body.ssj .card {
+    border-color: #facc15;
+    box-shadow: 0 0 0 3px rgba(250, 204, 21, .35), 0 0 46px rgba(250, 204, 21, .55);
+  }
+  .card.quake { animation: quake .6s linear; }
+  @keyframes quake {
+    0%,100% { transform: translate(0,0); }
+    15% { transform: translate(-5px, 3px); } 30% { transform: translate(5px, -3px); }
+    45% { transform: translate(-4px, -2px); } 60% { transform: translate(4px, 2px); }
+    80% { transform: translate(-2px, 1px); }
+  }
 
-    .login-card {
-      background: var(--card);
-      width: 100%;
-      max-width: 400px;
-      padding: 32px 28px;
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      box-shadow: 0 8px 24px rgba(43, 33, 24, 0.08);
-    }
+  h1 { margin: 0; text-align: center; font-size: 32px; letter-spacing: -.01em; }
+  .sub { margin: 6px 0 34px; text-align: center; color: var(--muted); font-size: 19px; }
 
-    .logo {
-      display: block;
-      max-width: 120px;
-      max-height: 80px;
-      margin: 0 auto 12px;
-    }
+  .field { margin-bottom: 26px; }
+  label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 17px; }
+  .box { position: relative; }
 
-    h1 {
-      font-size: 1.6rem;
-      text-align: center;
-      margin-bottom: 4px;
-    }
+  /* the spin: each box flips a full turn */
+  .box.spin { animation: boxspin .9s cubic-bezier(.5, 0, .2, 1); }
+  @keyframes boxspin {
+    from { transform: perspective(700px) rotateY(0deg); }
+    to   { transform: perspective(700px) rotateY(360deg); }
+  }
 
-    .subtitle {
-      text-align: center;
-      color: var(--muted);
-      font-size: 0.95rem;
-      margin-bottom: 24px;
-    }
+  input {
+    width: 100%;
+    height: 56px;
+    padding: 0 18px;
+    font: inherit;
+    font-size: 19px;
+    color: var(--ink);
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  input::placeholder { color: #a8917f; }
+  input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(234, 88, 12, .15); }
+  input.ok { border-color: var(--ok); }
+  input.bad { border-color: var(--bad); box-shadow: 0 0 0 4px rgba(220, 38, 38, .12); }
+  body.ssj input.ok { border-color: #eab308; box-shadow: 0 0 14px rgba(250, 204, 21, .6); }
+  #password { padding-right: 78px; }
+  .toggle {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    border: 0; background: none; color: var(--accent-dark);
+    font: inherit; font-weight: 700; font-size: 16px; padding: 10px; cursor: pointer;
+  }
+  .hint { margin: 6px 2px 0; font-size: 14px; color: var(--bad); }
+  .hint:empty { display: none; }
 
-    .field { margin-bottom: 16px; }
+  .submit {
+    width: 100%; height: 56px; margin-top: 8px;
+    border: 0; border-radius: 10px;
+    background: var(--accent); color: #fff;
+    font: inherit; font-weight: 700; font-size: 20px; cursor: pointer;
+    transition: background .2s, transform .1s;
+  }
+  .submit:hover { background: var(--accent-dark); }
+  .submit:active { transform: translateY(1px); }
+  .submit:disabled { cursor: default; }
+  .submit.done { background: var(--ok); }
+  .alt { margin: 44px 0 0; text-align: center; color: var(--muted); font-size: 17px; }
+  .alt a { color: var(--accent-dark); text-decoration: none; }
+  .alt a:hover { text-decoration: underline; }
 
-    label {
-      display: block;
-      font-size: 0.9rem;
-      font-weight: 600;
-      margin-bottom: 6px;
-    }
+  /* ---------- Fighter ---------- */
+  .mascot {
+    position: absolute;
+    left: 0; top: 0;
+    width: 54px; height: 61px;
+    pointer-events: none;
+    z-index: 5;
+    transition: transform .55s cubic-bezier(.3, 1.4, .5, 1);
+    will-change: transform;
+  }
+  .mascot svg { width: 100%; height: 100%; overflow: visible; display: block; }
+  .mascot.hop { animation: hop .55s ease-out; }
+  @keyframes hop { 0%,100% { translate: 0 0; } 40% { translate: 0 -16px; } }
 
-    input[type="email"],
-    input[type="password"],
-    input[type="text"] {
-      width: 100%;
-      padding: 12px 14px;
-      font-size: 1rem;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: #fff;
-      color: var(--text);
-    }
+  .mascot .arm { transition: transform .35s cubic-bezier(.3, 1.5, .5, 1); }
+  .mascot .arm.l { transform-origin: 28px 52px; transform: rotate(14deg); }
+  .mascot .arm.r { transform-origin: 52px 52px; transform: rotate(-14deg); }
+  .mascot .hair { transform-origin: 40px 24px; transition: transform .3s; }
+  .mascot .hair polygon { fill: #1f1a17; transition: fill .4s, filter .4s; }
+  .mascot .cap { fill: #1f1a17; transition: fill .4s; }
+  .mascot .pupil { transition: transform .15s, fill .4s; }
+  .mascot .puff { opacity: 0; transform-origin: 40px 56px; }
+  .mascot .body-wrap { animation: breathe 2.6s ease-in-out infinite; transform-origin: 40px 90px; }
+  @keyframes breathe { 50% { transform: scaleY(1.025); } }
 
-    input:focus {
-      outline: 3px solid rgba(232, 89, 12, 0.3);
-      border-color: var(--accent);
-    }
+  /* Super Saiyan: golden hair, teal eyes, flaming aura, lightning */
+  .mascot .aura { opacity: 0; transform-origin: 40px 50px; transition: opacity .4s; }
+  .mascot .bolts { opacity: 0; }
+  .mascot.ssj .hair polygon { fill: #fde047; filter: drop-shadow(0 0 3px #facc15); }
+  .mascot.ssj .cap { fill: #fde047; }
+  .mascot.ssj .pupil { fill: #0f766e; }
+  .mascot.ssj .hair { transform: scaleY(1.18); }
+  .mascot.ssj .aura { opacity: 1; animation: aura .28s ease-in-out infinite alternate; }
+  .mascot.ssj .bolts { animation: bolts .35s steps(2) infinite; }
+  @keyframes aura {
+    from { transform: scale(calc(.95 + var(--lvl, 1) * .06)) skewX(-2deg); }
+    to   { transform: scale(calc(1.08 + var(--lvl, 1) * .06)) skewX(2deg); }
+  }
+  @keyframes bolts { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
 
-    .password-wrap { position: relative; }
-    .password-wrap input { padding-right: 70px; }
+  /* charging: fists down, shaking */
+  .mascot.charge .arm.l { transform: rotate(32deg); }
+  .mascot.charge .arm.r { transform: rotate(-32deg); }
+  .mascot.charge .body-wrap { animation: shake .08s linear infinite; }
+  @keyframes shake { 0% { transform: translateX(-1.5px); } 50% { transform: translateX(1.5px); } 100% { transform: translateX(-1.5px); } }
 
-    .toggle-btn {
-      position: absolute;
-      right: 8px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: none;
-      border: none;
-      color: var(--accent-dark);
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-      padding: 6px 8px;
-    }
+  /* hand sign after a box is filled */
+  .mascot.sign .arm.l { transform: rotate(-62deg); }
+  .mascot.sign .arm.r { transform: rotate(62deg); }
+  .mascot.sign .puff { animation: puff .9s ease-out; }
+  @keyframes puff {
+    0% { opacity: 0; transform: scale(.3); }
+    30% { opacity: 1; transform: scale(1.1); }
+    100% { opacity: 0; transform: scale(1.6); }
+  }
 
-    .error-text {
-      color: var(--error);
-      font-size: 0.85rem;
-      margin-top: 4px;
-      min-height: 1em;
-    }
+  /* dance */
+  .mascot.dance .hair { transform: scaleY(1.3); }
+  .mascot.dance .body-wrap { animation: bounce .5s ease-in-out infinite; }
+  .mascot.dance .arm.l { animation: armL 1s ease-in-out infinite; }
+  .mascot.dance .arm.r { animation: armR 1s ease-in-out infinite; }
+  .mascot.dance .leg.l { transform-origin: 34px 74px; animation: legL 1s ease-in-out infinite; }
+  .mascot.dance .leg.r { transform-origin: 46px 74px; animation: legR 1s ease-in-out infinite; }
+  @keyframes bounce { 0%,100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-7px) rotate(4deg); } }
+  @keyframes armL { 0%,100% { transform: rotate(150deg); } 50% { transform: rotate(40deg); } }
+  @keyframes armR { 0%,100% { transform: rotate(-40deg); } 50% { transform: rotate(-150deg); } }
+  @keyframes legL { 0%,100% { transform: rotate(0); } 50% { transform: rotate(-24deg); } }
+  @keyframes legR { 0%,100% { transform: rotate(24deg); } 50% { transform: rotate(0); } }
 
-    .row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.9rem;
-      margin-bottom: 20px;
-    }
+  .mascot.oops { animation: oops .45s; }
+  @keyframes oops { 20%,60% { translate: -6px 0; } 40%,80% { translate: 6px 0; } }
 
-    .row label {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-weight: 400;
-      margin: 0;
-    }
+  .spark {
+    position: absolute; width: 8px; height: 8px; border-radius: 2px;
+    background: var(--gold); pointer-events: none; z-index: 6;
+    animation: spark 1.1s ease-out forwards;
+  }
+  @keyframes spark {
+    from { opacity: 1; transform: translate(0, 0) rotate(0) scale(1); }
+    to { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(260deg) scale(.3); }
+  }
 
-    a { color: var(--accent-dark); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-
-    .btn {
-      width: 100%;
-      padding: 13px;
-      font-size: 1rem;
-      font-weight: 600;
-      color: #fff;
-      background: var(--accent);
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    .btn:hover { background: var(--accent-dark); }
-    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
-
-    .message {
-      margin-top: 16px;
-      text-align: center;
-      font-size: 0.95rem;
-      min-height: 1.2em;
-    }
-    .message.error { color: var(--error); }
-    .message.success { color: var(--success); }
-
-    .footer-text {
-      text-align: center;
-      margin-top: 20px;
-      font-size: 0.9rem;
-      color: var(--muted);
-    }
-  </style>
+  @media (prefers-reduced-motion: reduce) {
+    .mascot, .mascot *, .box, .card, .flash { animation-duration: .01s !important; transition-duration: .01s !important; }
+  }
+  @media (max-width: 480px) { .card { padding: 40px 22px 28px; } h1 { font-size: 27px; } }
+</style>
 </head>
 <body>
 
-  <main class="login-card">
-    <!-- Put your logo at images/logo.png, or delete this line -->
-    <img class="logo" src="images/logo.png" alt="Shop logo" onerror="this.style.display='none'">
+<div class="flash" id="flash"></div>
 
-    <h1>Welcome back</h1>
-    <p class="subtitle">Log in to manage your menu</p>
+<main class="card" id="card">
+  <h1>Create your account</h1>
+  <p class="sub">Sign up to get started</p>
 
-    <form id="loginForm" novalidate>
-      <div class="field">
-        <label for="email">Email</label>
-        <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
-        <div class="error-text" id="emailError"></div>
+  <!-- Fighter (original drawing, inline SVG) -->
+  <div class="mascot" id="mascot" aria-hidden="true">
+    <svg viewBox="0 0 80 90" xmlns="http://www.w3.org/2000/svg">
+      <!-- Super Saiyan aura -->
+      <path class="aura" d="M40 -6 C52 8 70 10 72 38 C74 62 62 84 40 90 C18 84 6 62 8 38 C10 10 28 8 40 -6Z"
+            fill="#fde047" fill-opacity=".55" stroke="#facc15" stroke-width="1.5"/>
+      <g class="body-wrap">
+        <!-- legs -->
+        <g class="leg l"><rect x="29" y="72" width="10" height="16" rx="4" fill="#1d4ed8"/></g>
+        <g class="leg r"><rect x="41" y="72" width="10" height="16" rx="4" fill="#1d4ed8"/></g>
+        <!-- torso: orange gi, blue belt, no armor -->
+        <rect x="27" y="47" width="26" height="28" rx="8" fill="#ea580c"/>
+        <rect x="27" y="64" width="26" height="5" fill="#1d4ed8"/>
+        <path d="M33 47 L40 58 L47 47" fill="#1d4ed8"/>
+        <!-- arms -->
+        <g class="arm l">
+          <line x1="28" y1="52" x2="28" y2="72" stroke="#ea580c" stroke-width="7" stroke-linecap="round"/>
+          <rect x="24.5" y="66" width="7" height="4" rx="1.5" fill="#1d4ed8"/>
+          <circle cx="28" cy="73" r="4.2" fill="#ffd9b3"/>
+        </g>
+        <g class="arm r">
+          <line x1="52" y1="52" x2="52" y2="72" stroke="#ea580c" stroke-width="7" stroke-linecap="round"/>
+          <rect x="48.5" y="66" width="7" height="4" rx="1.5" fill="#1d4ed8"/>
+          <circle cx="52" cy="73" r="4.2" fill="#ffd9b3"/>
+        </g>
+        <!-- spiky hair -->
+        <g class="hair">
+          <polygon points="22,30 16,14 28,20 28,4 37,17 44,0 48,17 58,5 56,21 66,14 59,32"/>
+        </g>
+        <!-- head -->
+        <circle cx="40" cy="34" r="15" fill="#ffd9b3"/>
+        <path class="cap" d="M25 30 Q40 14 55 30 Q40 22 25 30Z"/>
+        <ellipse cx="34" cy="36" rx="4" ry="4.6" fill="#fff"/>
+        <ellipse cx="46" cy="36" rx="4" ry="4.6" fill="#fff"/>
+        <circle class="pupil" cx="34" cy="37" r="2.1" fill="#1f1a17"/>
+        <circle class="pupil" cx="46" cy="37" r="2.1" fill="#1f1a17"/>
+        <path d="M35 44 Q40 48 45 44" stroke="#9a4a1f" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+        <!-- puff burst for hand sign -->
+        <g class="puff">
+          <polygon fill="#fbbf24" points="40,44 43,52 51,54 44,58 46,66 40,61 34,66 36,58 29,54 37,52"/>
+        </g>
+      </g>
+      <!-- lightning -->
+      <g class="bolts" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6,30 14,38 8,44 16,54"/>
+        <polyline points="74,26 66,36 72,42 64,54"/>
+        <polyline points="12,70 20,66 16,78"/>
+        <polyline points="68,70 60,66 64,78"/>
+      </g>
+    </svg>
+  </div>
+
+  <form id="form" novalidate>
+    <div class="field">
+      <label for="email">Email</label>
+      <div class="box"><input id="email" name="email" type="email" placeholder="you@example.com" autocomplete="email" autofocus></div>
+      <div class="hint" id="email-hint"></div>
+    </div>
+
+    <div class="field">
+      <label for="password">Password</label>
+      <div class="box">
+        <input id="password" name="password" type="password" placeholder="At least 6 characters" autocomplete="new-password">
+        <button type="button" class="toggle" id="toggle">Show</button>
       </div>
+      <div class="hint" id="password-hint"></div>
+    </div>
 
-      <div class="field">
-        <label for="password">Password</label>
-        <div class="password-wrap">
-          <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password">
-          <button type="button" class="toggle-btn" id="togglePassword">Show</button>
-        </div>
-        <div class="error-text" id="passwordError"></div>
-      </div>
+    <div class="field">
+      <label for="confirm">Confirm password</label>
+      <div class="box"><input id="confirm" name="confirm" type="password" placeholder="Re-enter your password" autocomplete="new-password"></div>
+      <div class="hint" id="confirm-hint"></div>
+    </div>
 
-      <div class="row">
-        <label><input type="checkbox" id="remember"> Remember me</label>
-        <a href="#">Forgot password?</a>
-      </div>
+    <button class="submit" id="submit" type="submit">Create account</button>
+  </form>
 
-      <button type="submit" class="btn" id="loginBtn">Log in</button>
-      <div class="message" id="message" role="status"></div>
-    </form>
+  <p class="alt">Already have an account? <a href="login.html">Log in</a></p>
+</main>
 
-    <p class="footer-text">New here? <a href="#">Create an account</a></p>
-  </main>
+<script>
+(() => {
+  const card = document.getElementById('card');
+  const mascot = document.getElementById('mascot');
+  const form = document.getElementById('form');
+  const submitBtn = document.getElementById('submit');
+  const flash = document.getElementById('flash');
+  const pupils = mascot.querySelectorAll('.pupil');
+  const boxes = [...document.querySelectorAll('.box')];
 
-  <script>
-    // ---- CHANGE THESE TWO LINES ----
-    // Your backend address. After you deploy the backend, replace this with its live URL.
-    const API_URL = 'http://localhost:5000';
-    // The page to open after a successful login (your landing page file name).
-    const LANDING_PAGE = 'landing-page.html';
-    // --------------------------------
+  const email = document.getElementById('email');
+  const password = document.getElementById('password');
+  const confirmPw = document.getElementById('confirm');
+  const fields = [email, password, confirmPw];
 
-    const form = document.getElementById('loginForm');
-    const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
-    const emailError = document.getElementById('emailError');
-    const passwordError = document.getElementById('passwordError');
-    const message = document.getElementById('message');
-    const loginBtn = document.getElementById('loginBtn');
-    const toggleBtn = document.getElementById('togglePassword');
+  const rules = {
+    email:    { test: v => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v), msg: 'Enter a valid email address.' },
+    password: { test: v => v.length >= 6,                           msg: 'Use at least 6 characters.' },
+    confirm:  { test: v => v.length >= 6 && v === password.value,   msg: 'Passwords do not match.' }
+  };
 
-    // Show / hide password
-    toggleBtn.addEventListener('click', function () {
-      const isHidden = passwordInput.type === 'password';
-      passwordInput.type = isHidden ? 'text' : 'password';
-      toggleBtn.textContent = isHidden ? 'Hide' : 'Show';
+  let busy = false;        // true while transforming / dancing
+  let ssj = false;
+  let poseTimer = null;
+  const signed = {};
+
+  /* ---------- Movement ---------- */
+  let scale = 1;
+  function place(x, y) {
+    mascot.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+  }
+  function moveToField(el) {
+    const c = card.getBoundingClientRect();
+    const r = el.getBoundingClientRect();
+    scale = 1;
+    place(r.right - c.left - 54 - 14, r.top - c.top - 61 + 4);
+    hop();
+  }
+  function moveToButton() {
+    const c = card.getBoundingClientRect();
+    const r = submitBtn.getBoundingClientRect();
+    scale = 1.5;
+    const w = 54 * scale, h = 61 * scale;
+    place(r.left - c.left + r.width / 2 - w / 2, r.top - c.top - h + 6);
+  }
+  function hop() {
+    mascot.classList.remove('hop');
+    void mascot.offsetWidth;
+    mascot.classList.add('hop');
+  }
+  function setPose(name, ms) {
+    clearTimeout(poseTimer);
+    mascot.classList.remove('sign', 'dance', 'charge');
+    if (name) mascot.classList.add(name);
+    if (name && ms) poseTimer = setTimeout(() => mascot.classList.remove(name), ms);
+  }
+  function lookAt(el) {
+    const p = Math.min(el.value.length, 24) / 24;
+    const x = -1.6 + p * 3.2;
+    pupils.forEach(pu => pu.style.transform = `translate(${x}px, 1.2px)`);
+  }
+  function power() {
+    mascot.style.setProperty('--lvl', Object.values(signed).filter(Boolean).length || 1);
+  }
+
+  /* ---------- Box spin ---------- */
+  // The filled box spins first, then every other box follows.
+  function spinAll(startEl) {
+    const startIndex = fields.indexOf(startEl);
+    const order = boxes.map((_, i) => boxes[(startIndex + i) % boxes.length]);
+    order.forEach((b, i) => {
+      b.classList.remove('spin');
+      void b.offsetWidth;
+      b.style.animationDelay = (i * 140) + 'ms';
+      b.classList.add('spin');
+      b.addEventListener('animationend', function done() {
+        b.classList.remove('spin');
+        b.style.animationDelay = '';
+        b.removeEventListener('animationend', done);
+      });
+    });
+  }
+
+  /* ---------- Super Saiyan ---------- */
+  function goSuperSaiyan() {
+    if (ssj) return;
+    busy = true;
+    setPose('charge');
+    spawnSparks(8);
+    setTimeout(() => {
+      flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go');
+      card.classList.add('quake');
+      setTimeout(() => card.classList.remove('quake'), 650);
+      mascot.classList.add('ssj');
+      document.body.classList.add('ssj');
+      ssj = true;
+      setPose(null);
+      spawnSparks(16);
+      busy = false;
+    }, 900);
+  }
+  function powerDown() {
+    if (!ssj || busy) return;
+    mascot.classList.remove('ssj');
+    document.body.classList.remove('ssj');
+    ssj = false;
+  }
+
+  /* ---------- Field state ---------- */
+  function check(el, showError) {
+    const rule = rules[el.id];
+    const hint = document.getElementById(el.id + '-hint');
+    const valid = rule.test(el.value);
+    el.classList.toggle('ok', valid);
+    el.classList.toggle('bad', showError && !valid && el.value !== '');
+    hint.textContent = (showError && !valid && el.value !== '') ? rule.msg : '';
+    if (!valid) { signed[el.id] = false; power(); }
+    return valid;
+  }
+
+  fields.forEach((el, i) => {
+    el.addEventListener('focus', () => { if (!busy) { moveToField(el); lookAt(el); } });
+
+    el.addEventListener('input', () => {
+      lookAt(el);
+      check(el, false);
+      if (el === password && confirmPw.value) check(confirmPw, false);
+      if (el === email && !rules.email.test(email.value)) powerDown();
     });
 
-    function showMessage(text, type) {
-      message.textContent = text;
-      message.className = 'message ' + type;
-    }
+    // "change" fires on blur / Enter: that is when the box counts as filled
+    el.addEventListener('change', () => {
+      if (busy) return;
+      const valid = check(el, true);
+      if (!valid || signed[el.id]) return;
+      signed[el.id] = true;
+      power();
+      spinAll(el);                       // box spins, then all boxes spin
+      if (!ssj) {
+        goSuperSaiyan();                 // first filled box triggers the transformation
+      } else {
+        setPose('sign', 1000);
+        spawnSparks(6);
+      }
+    });
 
-    form.addEventListener('submit', async function (e) {
+    el.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
       e.preventDefault();
-      emailError.textContent = '';
-      passwordError.textContent = '';
-      showMessage('', '');
-
-      const email = emailInput.value.trim();
-      const password = passwordInput.value;
-      let valid = true;
-
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        emailError.textContent = 'Enter a valid email address.';
-        valid = false;
-      }
-      if (password.length < 6) {
-        passwordError.textContent = 'Password must be at least 6 characters.';
-        valid = false;
-      }
-      if (!valid) return;
-
-      loginBtn.disabled = true;
-      loginBtn.textContent = 'Logging in...';
-
-      try {
-        const res = await fetch(API_URL + '/api/auth/login', {
-          method: 'POST',
-          credentials: 'include', // lets the browser save the httpOnly cookie
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: email, password: password })
-        });
-
-        const data = await res.json().catch(function () { return {}; });
-
-        if (!res.ok) {
-          throw new Error(data.message || 'Login failed. Check your email and password.');
-        }
-
-        showMessage('Login successful. Redirecting...', 'success');
-        window.location.href = LANDING_PAGE;
-      } catch (err) {
-        if (err instanceof TypeError) {
-          showMessage('Cannot reach the server. Make sure the backend is running.', 'error');
-        } else {
-          showMessage(err.message || 'Login failed. Check your email and password.', 'error');
-        }
-      } finally {
-        loginBtn.disabled = false;
-        loginBtn.textContent = 'Log in';
-      }
+      el.dispatchEvent(new Event('change'));
+      if (fields[i + 1]) fields[i + 1].focus();
+      else form.requestSubmit();
     });
-  </script>
+  });
 
+  document.getElementById('toggle').addEventListener('click', e => {
+    const show = password.type === 'password';
+    password.type = show ? 'text' : 'password';
+    e.currentTarget.textContent = show ? 'Hide' : 'Show';
+    password.focus();
+  });
+
+  /* ---------- Sparks ---------- */
+  function spawnSparks(n) {
+    const c = card.getBoundingClientRect();
+    const m = mascot.getBoundingClientRect();
+    const cx = m.left - c.left + m.width / 2;
+    const cy = m.top - c.top + m.height / 2;
+    for (let i = 0; i < n; i++) {
+      const s = document.createElement('span');
+      s.className = 'spark';
+      const a = Math.random() * Math.PI * 2;
+      const d = 40 + Math.random() * 70;
+      s.style.left = cx + 'px';
+      s.style.top = cy + 'px';
+      s.style.setProperty('--dx', Math.cos(a) * d + 'px');
+      s.style.setProperty('--dy', Math.sin(a) * d + 'px');
+      s.style.background = Math.random() > .5 ? '#fde047' : '#38bdf8';
+      card.appendChild(s);
+      setTimeout(() => s.remove(), 1200);
+    }
+  }
+
+  /* ---------- Final dance ---------- */
+  function celebrate() {
+    busy = true;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Creating your account…';
+    if (document.activeElement) document.activeElement.blur();
+    if (!ssj) { mascot.classList.add('ssj'); document.body.classList.add('ssj'); ssj = true; }
+    power();
+    moveToButton();
+    setTimeout(() => {
+      setPose('dance');
+      spinAll(email);
+      const burst = setInterval(() => spawnSparks(6), 350);
+      setTimeout(() => {
+        clearInterval(burst);
+        setPose(null);
+        submitBtn.textContent = 'Account created ✓';
+        submitBtn.classList.add('done');
+        onRegisterSuccess();
+      }, 4200);
+    }, 450);
+  }
+
+  // >>> Put your real signup call / redirect here (fetch to your API, then redirect) <<<
+  function onRegisterSuccess() {
+    // window.location.href = 'login.html';
+  }
+
+  /* ---------- Submit ---------- */
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    if (busy) return;
+    const results = fields.map(el => check(el, true));
+    const firstBad = fields.find((el, i) => !results[i]);
+    if (firstBad) {
+      mascot.classList.remove('oops');
+      void mascot.offsetWidth;
+      mascot.classList.add('oops');
+      firstBad.focus();
+      return;
+    }
+    celebrate();
+  });
+
+  /* ---------- Start ---------- */
+  window.addEventListener('load', () => setTimeout(() => {
+    moveToField(fields.includes(document.activeElement) ? document.activeElement : email);
+  }, 50));
+  window.addEventListener('resize', () => {
+    if (busy && submitBtn.disabled) { moveToButton(); return; }
+    moveToField(fields.includes(document.activeElement) ? document.activeElement : email);
+  });
+})();
+</script>
 </body>
 </html>
