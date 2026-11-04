@@ -290,6 +290,7 @@
     </div>
 
     <button class="submit" id="submit" type="submit">Create account</button>
+    <div class="hint" id="server-hint" role="status" aria-live="polite"></div>
   </form>
 
   <p class="alt">Already have an account? <a href="login.html">Log in</a></p>
@@ -308,7 +309,9 @@
   const email = document.getElementById('email');
   const password = document.getElementById('password');
   const confirmPw = document.getElementById('confirm');
+  const serverHint = document.getElementById('server-hint');
   const fields = [email, password, confirmPw];
+  const API_URL = 'http://localhost:5000';
 
   const rules = {
     email:    { test: v => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v), msg: 'Enter a valid email address.' },
@@ -501,15 +504,15 @@
     }, 450);
   }
 
-  // >>> Put your real signup call / redirect here (fetch to your API, then redirect) <<<
   function onRegisterSuccess() {
-    // window.location.href = 'login.html';
+    window.location.href = 'landing-page.html';
   }
 
   /* ---------- Submit ---------- */
-  form.addEventListener('submit', e => {
+  form.addEventListener('submit', async e => {
     e.preventDefault();
     if (busy) return;
+    serverHint.textContent = '';
     const results = fields.map(el => check(el, true));
     const firstBad = fields.find((el, i) => !results[i]);
     if (firstBad) {
@@ -519,7 +522,29 @@
       firstBad.focus();
       return;
     }
-    celebrate();
+    busy = true;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Creating account...';
+    try {
+      const response = await fetch(API_URL + '/api/auth/register', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.value.trim(), password: password.value })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.message || 'Could not create the account.');
+      }
+      celebrate();
+    } catch (error) {
+      busy = false;
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Create account';
+      serverHint.textContent = error instanceof TypeError
+        ? 'Cannot reach the server. Make sure the backend is running.'
+        : (error.message || 'Could not create the account.');
+    }
   });
 
   /* ---------- Start ---------- */
